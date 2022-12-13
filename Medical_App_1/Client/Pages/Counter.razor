@@ -1,0 +1,126 @@
+﻿@page "/counter"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager _navigationManager
+@using Medical_App_1.Shared.Models
+@using System.Security.Claims
+@inject IJSRuntime _jsRuntime
+<h1>Counter</h1>
+
+
+<div style="border:0px;height:90vh;">
+    <div class="panel panel-primary" style="height: 100%;">
+        <div class="panel-heading top-bar">
+            <div class="col-md-8 col-xs-8">
+                <div class="input-group" id="RmyForm">
+                    <input id="txtMessageInput1" @bind="ToUserId" type="text" class="form-control input-sm chat_input">
+                    <input id="txtMessageInput2" @bind="FromUserId" type="text" class="form-control input-sm chat_input">
+
+                </div>
+            </div>
+        </div>
+        <div id="divMessageContainerBase" class="panel-body msg_container_base">
+            @if (Messages != null && Messages.Count() > 0)
+            {
+                @foreach (var message in Messages)
+                {
+                    @if (message.FromUserId == FromUserId)
+                    {
+                        <div class="row msg_container base_sent">
+                            <div class="col-md-10 col-xs-10">
+                                <div class="messages msg_sent">
+                                    <p>@message.MessageText</p>
+                                </div>
+                            </div>
+                        </div> }
+                    else
+                    {
+                        <div class="row msg_container base_receive">
+                            <div class="col-md-10 col-xs-10">
+                                <div class="messages msg_receive">
+                                    <p>@message.MessageText</p>
+                                </div>
+                            </div>
+                        </div>}}}
+        </div>
+        <!--CHAT USER BOX-->
+        <div class="panel-footer">
+            <div class="input-group" id="myForm">
+                <input id="txtMessageInput" @bind="MessageText" type="text" class="form-control input-sm chat_input"
+                       placeholder="Write your message here...">
+                <button class="btn btn-primary" @onclick="Send">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public string ToUserId { get; set; }
+    public string FromUserId { get; set; }
+    public string MessageText { get; set; }
+    public List<Message> Messages { get; set; } = new List<Message>();
+
+    [CascadingParameter]
+    public Task<AuthenticationState> authenticationStateTask { get; set; }
+    private HubConnection hubConnection;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        ToUserId = "1";
+        var claimsPrincipal = (await authenticationStateTask).User;
+
+        if (claimsPrincipal.Identity.IsAuthenticated)
+        {
+            var claim = claimsPrincipal.FindFirst(c => c.Type == ClaimTypes.NameIdentifier);
+            FromUserId = claim?.Value.ToString();
+
+        }
+        else
+        {
+            _navigationManager.NavigateTo("/");
+        }
+
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(_navigationManager.ToAbsoluteUri("/chathub"))
+            .Build();
+
+        hubConnection.On<Message>("ReceiveMessage", (message) =>
+        {
+            message.MessageText = message.MessageText + " form id " + message.FromUserId + " to id " + message.ToUserId;
+
+            //Messages.Add(message);
+            //StateHasChanged();
+            if (message.FromUserId == FromUserId ||
+                (message.ToUserId == FromUserId && message.FromUserId == ToUserId))
+            {
+                Messages.Add(message);
+                StateHasChanged();
+            }
+        });
+
+        await hubConnection.StartAsync();
+
+    }
+    public async Task Send()
+    {
+        if (MessageText.Length > 0)
+        {
+            Message message = new Message();
+            message.ToUserId = ToUserId;
+            message.FromUserId = FromUserId;
+            message.MessageText = MessageText;
+
+            await hubConnection.SendAsync("SendMessage", message);
+            MessageText = "";
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "./js/site.js");
+        await module.InvokeVoidAsync("setScroll");
+    }
+
+
+}

@@ -1,0 +1,99 @@
+﻿
+@inject HttpClient _httpClient
+@inject NavigationManager _navigationManager
+@inject ILocalStorageService _localStorageService
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Filled.Home">Home</MudNavLink>
+    <AuthorizeView Roles="Operator">
+     
+            <MudNavLink Href="Profile" Match="NavLinkMatch.All" Icon="@Icons.Filled.AccountCircle">Profile</MudNavLink>
+
+            <MudNavGroup Title="Account Master" Expanded="false" Icon="@Icons.Filled.PersonAdd">
+                <MudNavLink Href="" Match="NavLinkMatch.All">Supplier</MudNavLink>
+                <MudNavLink Href="" Match="NavLinkMatch.All">Customer</MudNavLink>
+                <MudNavLink Href="" Match="NavLinkMatch.All">Doctor</MudNavLink>
+                <MudNavGroup Title="Ledger" Expanded="false">
+                    <MudNavLink Href="" Match="NavLinkMatch.All">Supplier Ledger</MudNavLink>
+                    <MudNavLink Href="" Match="NavLinkMatch.All">Customer Ledger</MudNavLink>
+                </MudNavGroup>
+
+            </MudNavGroup>
+
+            <MudNavLink Href="Medicine" Match="NavLinkMatch.All" Icon="@Icons.Filled.Medication">Medicine Master</MudNavLink>
+
+            <MudNavGroup Title="Purchase" Expanded="false" Icon="@Icons.Filled.PostAdd">
+                <MudNavLink Href="PurchasePageAddEdit" Match="NavLinkMatch.All">Purchase</MudNavLink>
+                <MudNavLink Href="" Match="NavLinkMatch.All">Purchase Return</MudNavLink>
+            </MudNavGroup>
+
+
+            <MudNavGroup Title="Sales" Expanded="false" Icon="@Icons.Filled.AddChart">
+                <MudNavLink Href="" Match="NavLinkMatch.All">Cache Sales</MudNavLink>
+                <MudNavLink Href="" Match="NavLinkMatch.All">Credit Sales</MudNavLink>
+            </MudNavGroup>
+
+            <MudNavLink Href="Counter" Match="NavLinkMatch.All" Icon="@Icons.Filled.Assessment">Report</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Filled.Logout" @onclick="Logout">Logout</MudNavLink>
+        
+    </AuthorizeView>
+</MudNavMenu>
+
+<!--<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">Medical_App</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">-->
+@*<li class="nav-item px-3">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <span class="oi oi-home" aria-hidden="true"></span> Home
+        </NavLink>
+    </li>*@
+<!--<li class="nav-item px-3">
+            <NavLink class="nav-link" href="profile">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Profile
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="Medicine">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Medicine
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="PurchasePage">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Purchase
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="counter">
+                <span class="oi oi-plus" aria-hidden="true"></span> Counter
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <a class="nav-link" href="" @onclick="Logout">
+                <span class="oi oi-lock-locked" aria-hidden="true"></span> Logout
+            </a>
+        </li>
+    </ul>
+</div>-->
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+    private async Task Logout()
+    {
+        await _localStorageService.RemoveItemAsync("jwt_token");
+        _navigationManager.NavigateTo("/", true);
+        //await _httpClient.GetAsync("user/logoutuser");
+        //_navigationManager.NavigateTo("/", true);
+    }
+}

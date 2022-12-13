@@ -1,0 +1,551 @@
+﻿@page "/PurchasePage"
+@using Medical_App_1.Client.Services.MedicalService.Interfaces
+@using Medical_App_1.Shared.Models.Medical;
+@using Medical_App_1.Shared.Models;
+@using Medical_App_1.Client.Pages.UserControl;
+
+@inject IMedicineServiceClient _medicineService
+@inject IPurchaseServiceClient _purchseService
+@inject IToastService _toastService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@*@using Syncfusion.Blazor.Grids*@
+@if (SpinnerVisible == true)
+{
+    <div class="spinner_overlay"></div>
+    <div class="spinner"></div>
+
+}
+<EditForm Model="@_Purchse">
+    <MudCard>
+        <MudCardHeader>
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <h3>Purchase</h3>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudAutocomplete T="@ListItems" ResetValueOnEmptyText="false" Label="Search BillNoe" @bind-Value="selectedbill" SearchFunc="@FillBillNo" ToStringFunc="@(e => e == null ? null : $"{e.Text}")" Immediate="true" Margin="Margin.None" Dense="true" Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="4">
+                    <MudDatePicker Label="Date Format" @bind-Date="_Purchse.Purdate" DateFormat="dd.MM.yyyy" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudTextField Label="Medicine Name" @bind-Value="_Purchse.BillNo" For="@(() => _Purchse.BillNo)" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="string" Label="Select Suplier" AnchorOrigin="Origin.BottomCenter" @bind-Value="_Purchse.SupId">
+                        @foreach (var item in ListSuplier)
+                        {
+                            <MudSelectItem Value="@item.Value">@item.Text</MudSelectItem>
+
+                        }
+                    </MudSelect>
+                </MudItem>
+
+            </MudGrid>
+            <MudGrid>
+                @if (_Purchse.PurchaseItemList != null)
+                {
+                    <MudSimpleTable Dense="true" Hover="@true" Bordered="@true" Striped="@true" FixedHeader="true" Style="height: 500px; overflow-x: auto; ">
+                        @*<table class="table"  Style="height: 500px; overflow-x: auto; ">*@
+                        <thead>
+                            <tr>
+
+                                <th>SNo</th>
+                                <th>Medicine..Name.............</th>
+                                <th>Strip......</th>
+                                <th>Tab.......</th>
+                                <th>Disc......</th>
+                                <th>Free......</th>
+                                <th>GST.......</th>
+                                <th>ExpDate..................</th>
+                                <th>BatchNo...</th>
+                                @*<th>DescA</th>
+                                    <th>VatA</th>*@
+                            <th>Rate.......</th>
+                            <th>MRP........</th>
+                            <th>Amount.....</th>
+                            <th>Action......</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _Purchse.PurchaseItemList)
+                            {
+                                <tr>
+
+                                    <td>
+                                        @item.SNo
+                                        @*<MudButton Variant="Variant.Text"
+                                                       EndIcon="@(item.OpenDetails? Icons.Material.Filled.FullscreenExit :Icons.Filled.Fullscreen)"
+                                                       Color="@(item.OpenDetails? Color.Warning:Color.Primary)"
+                                                       Style="text-transform:none" OnClick="@(e => ToggleOpen(item))">
+
+                                                @item.SNo
+                                            </MudButton>*@
+                                    </td>
+                                    <td>
+                                        <SelectMedition selectedItemParam="@item.MName" Id="@item.MId.ToString()" OnMedicineListSelection="@(e => SelectedMedetion(e, item))"></SelectMedition>
+                                    </td>
+                                    <td>
+                                        <input type="text" @bind="@item.Stri"  @oninput="@(e => StripCalculate(e, item))" class="form-control" placeholder="Tab" />
+                                    </td>
+                                    <td>
+                                        <input type="text" @bind="@item.Tab" class="form-control" placeholder="Tab" />
+                                    </td>
+                                    <td><input type="text" @bind="@item.Disc" class="form-control" placeholder="Disc" /></td>
+                                    <td><input type="text" @bind="@item.Free" class="form-control" placeholder="Disc" /></td>
+                                    <td><input type="text" @bind="@item.Vat" class="form-control" placeholder="Disc" /></td>
+
+
+                                    <td>
+                                        <MudDatePicker @bind-Date="@item.ExpDate" DateFormat="dd.MM.yyyy" Margin="Margin.None" Dense="true" Variant="Variant.Outlined" />
+                                        @*<input type="text" @bind="@item.ExpDate" class="form-control" placeholder="Rate" />*@
+
+                                    </td>
+                                    <td> <input type="text" @bind="@item.BatchNo" class="form-control" placeholder="Rate" /></td>
+
+                                    @*<td> <input type="text" @bind="@item.DescA" class="form-control" placeholder="Rate" /></td>
+                                        <td> <input type="text" @bind="@item.VatA" class="form-control" placeholder="Rate" /></td>*@
+                                    <td> <input type="text" @bind="@item.Rate" class="form-control" placeholder="Rate" /></td>
+                                    <td> <input type="text" @bind="@item.MRP" class="form-control" placeholder="MRP" /></td>
+                                    <td> <input type="text" @bind="@item.Amount" class="form-control" placeholder="Amount" @onkeydown="@(e => CreateBlankItem(e, item))" /></td>
+
+                                    <td>
+                                        @if (item.Action == "Delete")
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(e => AlterItem(item))" aria-label="delete"></MudIconButton>
+
+                                        }
+                                        else if (item.Action == "Add")
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="@(e => AlterItem(item))" aria-label="delete"></MudIconButton>
+
+                                        }
+
+                                        @*<MudPopover Open="@item.OpenDetails" Fixed="true" Class="px-4 pt-4" AnchorOrigin="@AnchorOrigin" TransformOrigin="@TransformOrigin">
+                                                <div class="d-flex flex-column">
+                                                    <MudText>Content of the popover can be anything.</MudText>
+                                                    <MudButton OnClick="@(e => ToggleOpen(item))" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
+                                                </div>
+                                            </MudPopover>*@
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </MudSimpleTable>
+
+
+                }
+            </MudGrid>
+            <MudGrid>
+                <MudItem xs="12" sm="3">
+                    <MudTextField Label="ValueOfGood" @bind-Value="_Purchse.ValueOfGood" For="@(() => _Purchse.ValueOfGood)" />
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudTextField Label="Descount" @bind-Value="_Purchse.Descount" For="@(() => _Purchse.Descount)" />
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudTextField Label="TotalAmount" @bind-Value="_Purchse.TotalAmount" For="@(() => _Purchse.TotalAmount)" />
+                </MudItem>
+                <MudItem xs="12" sm="2">
+                    <MudTextField Label="GST" @bind-Value="_Purchse.Vat" For="@(() => _Purchse.Vat)" />
+                </MudItem>
+                <MudItem xs="12" sm="3">
+                    <MudTextField Label="NetAmount" @bind-Value="_Purchse.NetAmount" For="@(() => _Purchse.NetAmount)" />
+                </MudItem>
+            </MudGrid>
+
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Submit</MudButton>
+        </MudCardActions>
+    </MudCard>
+    <MudDialog @bind-IsVisible="visible">
+        <DialogContent>
+            <MudContainer Style="max-height: 400px; width:500px; overflow-y: scroll">
+                <MedicinePage Id="@_Medicine.SMedicine" OnMedicineSelection="MedationRate"></MedicinePage>
+            </MudContainer>
+
+        </DialogContent>
+        <!--<DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>-->
+        @*<MudButton Color="Color.Primary" OnClick="Submit">Ok</MudButton>*@
+        <!--</DialogActions>-->
+    </MudDialog>
+
+
+</EditForm>
+
+
+
+
+@code {
+
+    //  public Origin TransformOrigin { get; set; } = Origin.TopLeft;
+    //public Origin AnchorOrigin { get; set; } = Origin.BottomLeft;
+    //public void ToggleOpen(PurchaseItem item)
+    //{
+    //    if (item.OpenDetails)
+    //        item.OpenDetails = false;
+    //    else
+    //        item.OpenDetails = true;
+
+    //}
+
+    private bool visible;
+    public bool SpinnerVisible { get; set; } = false;
+    PurchaseItem _BlankPurchaseItem { get; set; }
+    public Medicine _Medicine = new Medicine();
+    public Purchase _Purchse = new Purchase();
+    public IEnumerable<ListItems> ListBillNo = new List<ListItems>();
+    public IEnumerable<ListItems> ListSuplier = new List<ListItems>();
+
+
+    public Result<Medicine> resultMedicine = new Result<Medicine>();
+    public Result<Purchase> resultPurchse = new Result<Purchase>();
+    public Result<List<ListItems>> resultListMedicine = new Result<List<ListItems>>();
+    public Result<List<ListItems>> resultListBillNo = new Result<List<ListItems>>();
+    public Result<List<ListItems>> resultListSuplier = new Result<List<ListItems>>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        SpinnerVisible = true;
+        _Purchse.PurchaseType = "Purchase";
+        resultListBillNo = await _purchseService.ListBillNo(_Purchse);
+        if (resultListBillNo.Status == true)
+        {
+            ListBillNo = resultListBillNo.Data;
+
+        }
+        _Purchse.SuplierType = "Suplier";
+        resultListSuplier = await _purchseService.ListSuplier(_Purchse);
+        if (resultListSuplier.Status == true)
+        {
+            ListSuplier = resultListSuplier.Data;
+
+        }
+        //  System.Threading.Thread.Sleep(2000);
+
+        addnewpurchaseitem();
+
+
+        SpinnerVisible = false;
+    }
+
+    void SelectedMedetion(Result<Medicine> r, PurchaseItem item)
+    {
+        //  _toastService.ShowInfo(r.Data.SMedicine);
+        item.MName = r.Data.SMedicine;
+        item.Rate = r.Data.MRate;
+        item.MRP = r.Data.MMRP;
+        item.MId = r.Data.MId;
+        item.Vat = r.Data.MVAT;
+        item.Box = r.Data.MBox;
+
+        //if (r.Data.MRate=="0" || r.Data.MMRP == "0")
+        //{
+        //    _Medicine.SMedicine = r.Data.SMedicine;
+        //    visible = true;
+        //}
+
+
+        // _Medicine = r.Data;
+    }
+
+    public void MedationRate(Medicine value)
+    {
+        // _toastService.ShowInfo(value.ToString());
+
+        foreach (var nitem in _Purchse.PurchaseItemList.Where(x => x.MName == value.SMedicine))
+        {
+
+            nitem.Rate = value.MRate;
+            nitem.MRP = value.MMRP;
+            visible = false;
+        }
+
+    }
+
+
+    private void AlterItem(PurchaseItem item)
+    {
+        if (item.Action == "Delete")
+        {
+            _Purchse.PurchaseItemList.Remove(item);
+            UpdatePurchaseAmount();
+            int i = 0;
+            int j = _Purchse.PurchaseItemList.Count;
+            foreach (var nitem in _Purchse.PurchaseItemList)
+            {
+                i = i + 1;
+                nitem.SNo = i;
+
+                if (j == i)
+                {
+                    nitem.Action = "Add";
+                }
+                else
+                {
+                    nitem.Action = "Delete";
+                }
+
+            }
+        }
+        else if (item.Action == "Add")
+        {
+            if (item.Rate == 0 || item.MRP == 0)
+            {
+                _Medicine.SMedicine = item.MName;
+                visible = true;
+            }
+            else
+            {
+                foreach (var nitem in _Purchse.PurchaseItemList)
+                {
+                    nitem.Action = "Delete";
+                }
+
+                addnewpurchaseitem();
+            }
+        }
+
+    }
+    private void CreateBlankItem(KeyboardEventArgs e, PurchaseItem item)
+    {
+
+        if (e.Code == "Tab")
+        {
+            if (item.Action == "Add")
+            {
+                if (item.Rate == 0 || item.MRP == 0)
+                {
+                    _Medicine.SMedicine = item.MName;
+                    visible = true;
+                }
+                else
+                {
+                    foreach (var nitem in _Purchse.PurchaseItemList)
+                    {
+                        nitem.Action = "Delete";
+                    }
+                    addnewpurchaseitem();
+
+                }
+
+
+
+            }
+        }
+    }
+
+    private ListItems selectedbillItem { get; set; }
+
+    public ListItems selectedbill
+    {
+        get
+        {
+            return selectedbillItem;
+        }
+        set
+        {
+            selectedbillItem = value;
+            FillPurchse(value);
+
+
+            //ChangeEventArgs selectedEventArgs = new ChangeEventArgs();
+            //selectedEventArgs.Value = value;
+            //OnChangeSelected(selectedEventArgs);
+        }
+
+
+    }
+
+    private async Task FillPurchse(ListItems val)
+    {
+
+        if (!string.IsNullOrEmpty(val.Text))
+        {
+
+            Purchase p = new Purchase();
+            p.BillNo = val.Text;
+
+            resultPurchse = await _purchseService.PurchaseSingle(p);
+
+            if (resultPurchse.Status == true)
+            {
+                _Purchse = resultPurchse.Data;
+                addnewpurchaseitem();
+                StateHasChanged();
+            }
+            else
+            {
+                _toastService.ShowInfo(resultPurchse.Message.FirstOrDefault());
+            }
+
+
+        }
+
+
+    }
+    private async Task<IEnumerable<ListItems>> FillBillNo(string value)
+    {
+
+        //if (ListBillNo.Select(x => x.Text).Where(x => x == value).Count() == 0)
+        //{
+        //    ListItems newbiil = new ListItems();
+        //    newbiil.Text = value;
+        //    newbiil.Value = "";
+        //    ListBillNo.Append(newbiil);
+        //}
+
+        return ListBillNo;
+
+    }
+
+    public void addnewpurchaseitem()
+    {
+        _BlankPurchaseItem = new PurchaseItem();
+        _BlankPurchaseItem.Action = "Add";
+        _BlankPurchaseItem.SNo = _Purchse.PurchaseItemList.Count() + 1;
+        _Purchse.PurchaseItemList.Add(_BlankPurchaseItem);
+    }
+    private void StripCalculate(ChangeEventArgs e, PurchaseItem item)
+    {
+        item.Stri =Convert.ToInt32( e.Value);
+        Calculate(item);
+    }
+
+    private void Calculate( PurchaseItem item)
+    {
+        //decimal fvom = 0, fdesc = 0, fvat = 0, fnamtAmount = 0;
+
+        //foreach (var item in _Purchse.PurchaseItemList)
+        //{
+
+
+        decimal box = 0, mrate = 0, mratetab = 0, mvattab = 0, amount = 0, amounttab = 0, mvat = 0, netamount = 0, vom = 0, vov = 0, desc = 0, vomod = 0, vovod = 0, netamountod = 0, BoxSize = 0, tvomdesc = 0;
+
+        if (item.Box!=0)
+        {
+
+            //if (string.IsNullOrEmpty(item.Rate))
+            //    item.Rate = "0";
+            //if (string.IsNullOrEmpty(item.Stri))
+            //    item.Stri = "0";
+            //if (string.IsNullOrEmpty(item.Vat))
+            //    item.Vat = "0";
+            //if (string.IsNullOrEmpty(item.Disc))
+            //    item.Disc = "0";
+            //if (string.IsNullOrEmpty(item.Free))
+            //    item.Free = "0";
+            //if (string.IsNullOrEmpty(item.VOM))
+            //    item.VOM = "0";
+
+            box = Convert.ToDecimal(item.Box);
+            if (BoxSize == 1)
+            {
+                item.Tab = 0;
+            }
+
+            mrate = item.Rate * item.Stri;
+            mvat = (mrate * Convert.ToDecimal(item.Vat)) / 100;
+            amount = mrate + mvat;
+
+
+            mratetab = item.Rate / box;
+            mratetab = mratetab * item.Tab;
+            mvattab = (mratetab * item.Vat) / 100;
+            amounttab = mratetab + mvattab;
+
+
+            netamount = amount + amounttab;
+            //MAmount.Text = netamount.ToString();
+            vom = mrate + mratetab;//value of goog without vate
+            vov = mvat + mvattab;// only vat
+
+            if (Convert.ToDecimal(item.Disc) > 0)
+            {
+                desc = (vom * item.Disc) / 100;
+                vomod = vom - desc;
+                vovod = (vomod * item.Vat) / 100;
+                netamountod = vomod + vovod;
+                item.DescA = desc;
+                item.Amount = netamountod;
+                item.VatA = vovod;
+
+
+            }
+            else
+            {
+                item.DescA = 0;
+                item.Amount = netamount;
+                item.VatA = vov;
+            }
+            tvomdesc = vom - desc;
+            item.VOM = vom;
+            item.TVOMDESC = tvomdesc;
+            UpdatePurchaseAmount();
+        }
+
+
+
+    }
+
+    public void UpdatePurchaseAmount()
+    {
+        decimal fvom = 0, fdesc = 0, fvat = 0, ftotalAmount = 0, fnamtAmount = 0;
+
+        //if (string.IsNullOrEmpty(_Purchse.ValueOfGood))
+        //    _Purchse.ValueOfGood = "0";
+        //if (string.IsNullOrEmpty(_Purchse.Descount))
+        //    _Purchse.Descount = "0";
+        //if (string.IsNullOrEmpty(_Purchse.TotalAmount))
+        //    _Purchse.TotalAmount = "0";
+        //if (string.IsNullOrEmpty(_Purchse.Vat))
+        //    _Purchse.Vat = "0";
+        //if (string.IsNullOrEmpty(_Purchse.NetAmount))
+        //    _Purchse.NetAmount = "0";
+
+        //if (type == true)
+        //{
+        //    fvom = Convert.ToDecimal(_Purchse.ValueOfGood) + Convert.ToDecimal(item.VOM);
+        //    fdesc = Convert.ToDecimal(_Purchse.Descount) + Convert.ToDecimal(item.DescA);
+        //    fvat = Convert.ToDecimal(_Purchse.Vat) + Convert.ToDecimal(item.VatA);
+        //    fnamtAmount = Convert.ToDecimal(_Purchse.NetAmount) + Convert.ToDecimal(item.Amount);
+        //    ftotalAmount = Convert.ToDecimal(_Purchse.TotalAmount) + Convert.ToDecimal(item.TVOMDESC);
+
+
+        //}
+        //else
+        //{
+        //    fvom = Convert.ToDecimal(_Purchse.ValueOfGood) - Convert.ToDecimal(item.VOM);
+        //    fdesc = Convert.ToDecimal(_Purchse.Descount) - Convert.ToDecimal(item.DescA);
+        //    fvat = Convert.ToDecimal(_Purchse.Vat) - Convert.ToDecimal(item.VatA);
+        //    fnamtAmount = Convert.ToDecimal(_Purchse.NetAmount) - Convert.ToDecimal(item.Amount);
+        //    ftotalAmount = Convert.ToDecimal(_Purchse.TotalAmount) - Convert.ToDecimal(item.TVOMDESC);
+        //}
+
+
+        foreach (var item in _Purchse.PurchaseItemList)
+        {
+            fvom = fvom + Convert.ToDecimal(item.VOM);
+            fdesc = fdesc + Convert.ToDecimal(item.DescA);
+            fvat = fvat + Convert.ToDecimal(item.VatA);
+            fnamtAmount = fnamtAmount + Convert.ToDecimal(item.Amount);
+            ftotalAmount = ftotalAmount + Convert.ToDecimal(item.TVOMDESC);
+        }
+
+        _Purchse.ValueOfGood = fvom;
+        _Purchse.Descount = fdesc;
+        _Purchse.TotalAmount = ftotalAmount;
+        _Purchse.Vat = fvat;
+        _Purchse.NetAmount = fnamtAmount;
+
+
+    }
+}
+

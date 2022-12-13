@@ -1,0 +1,185 @@
+﻿@using Medical_App_1.Client.Services.MedicalService.Interfaces
+@using Medical_App_1.Shared.Models.Medical;
+@using Medical_App_1.Shared.Models;
+@inject IMedicineServiceClient _medicineService
+@inject IToastService _toastService
+@*//@onkeydown="ClearMadition"*@
+@*<MudAutocomplete T="string" Label="Search Medicine" @bind-Value="selectedmed" MaxItems="30" SelectValueOnTab="true" SearchFunc="@LodefilterList" />*@
+<MudAutocomplete T="@ListItems"  Label="Search Medicine" @bind-Value="selectedmed" SearchFunc="@LodefilterList" ToStringFunc="@(e=> e==null?null : $"{e.Text} ({e.Value})")" Margin="Margin.None" Dense="true" Variant="Variant.Outlined"  />
+@*<input type="text" id="@controlid" @oninput="LodefilterLists" autoComplete="on" @bind=selectedmed list="@controllistid" class="form-control" placeholder="Search Medicine" />
+    <datalist id="@controllistid">
+        @foreach (var item in _Medicine.MedicineList)
+        {
+            <option value="@item.Text">@item.Text</option>
+        }
+    </datalist>*@
+
+@code {
+
+
+    [Parameter]
+    public EventCallback<Result<Medicine>> OnMedicineListSelection { get; set; }
+    public Medicine _Medicine = new Medicine();
+    [Parameter]
+    public string Id { get; set; }
+    [Parameter]
+
+    public string selectedItemParam { get; set; }
+    //public string controlid { get; set; }
+    //public string controllistid { get; set; }
+    //public string controllistid { get; set; }
+
+    public Result<Medicine> r = new Result<Medicine>();
+    public Result<List<ListItems>> li = new Result<List<ListItems>>();
+    private ListItems selectedItem { get; set; }
+
+    // private ListItems value1;
+
+    //public async Task onchang(string value)
+    //{
+
+    //    _Medicine.SMedicine = value;
+    //    r = await _medicineService.ListMedicineSingle(_Medicine);
+    //    //_toastService.ShowInfo(r.Message.FirstOrDefault());
+    //    if (r.Status == true)
+    //    {
+
+    //        await OnMedicineListSelection.InvokeAsync(r);
+
+    //    }
+    //}
+
+    public ListItems selectedmed
+    {
+        get
+        {
+            return selectedItem;
+        }
+        set
+        {
+            selectedItem = value;
+            returnMethod(value);
+
+            //ChangeEventArgs selectedEventArgs = new ChangeEventArgs();
+            //selectedEventArgs.Value = value;
+            //OnChangeSelected(selectedEventArgs);
+        }
+
+
+    }
+    private async Task returnMethod(ListItems val)
+    {
+        _Medicine.SMedicine = val.Text;
+        r = await _medicineService.ListMedicineSingle(_Medicine);
+        //_toastService.ShowInfo(r.Message.FirstOrDefault());
+        if (r.Status == true)
+        {
+            await OnMedicineListSelection.InvokeAsync(r);
+
+        }
+        //Do something
+    }
+    private async Task<IEnumerable<ListItems>> LodefilterList(string value)
+    {
+        //List<string> s = new List<string>();
+        if (value.Length > 0)
+        {
+            _Medicine.MName = value;
+            li = await _medicineService.ListMedicineName(_Medicine);
+            if (li.Status == true)
+            {
+                _Medicine.MedicineList = li.Data;
+                // s = _Medicine.MedicineList.Select(x => x.Text).ToList();
+
+            }
+
+        }
+        return _Medicine.MedicineList;
+    }
+    protected async override Task OnInitializedAsync()
+    {
+
+        //controlid = Id;
+        //controllistid = "MNameL" + Id;
+
+        //selectedItem = selectedItemParam;
+        //value1 = new ListItems();
+        //value1.Text = "ddddd";
+        //value1.Value = "1";
+        if (!string.IsNullOrEmpty(selectedItemParam))
+        {
+            selectedItem = new ListItems();
+            selectedItem.Text = selectedItemParam;
+            selectedItem.Value = Id;
+        }
+
+    }
+
+    //private async Task OnChangeSelected(ChangeEventArgs e)
+    //{
+    //    if (e.Value.ToString() != string.Empty)
+    //    {
+    //        selectedItem = e.Value.ToString();
+    //        _Medicine.SMedicine = selectedItem;
+    //        r = await _medicineService.ListMedicineSingle(_Medicine);
+
+    //        if (r.Status == true)
+    //        {
+    //            await OnMedicineSelection.InvokeAsync(r);
+
+    //        }
+
+    //    }
+
+    //}
+    //private async Task ClearMadition(KeyboardEventArgs e)
+    //{
+
+    //    if (e.Code == "Enter" || e.Code == "NumpadEnter")
+    //    {
+    //        _Medicine.SMedicine = selectedmed;
+    //        r = await _medicineService.ListMedicineSingle(_Medicine);
+
+    //        if (r.Status == true)
+    //        {
+    //            await OnMedicineSelection.InvokeAsync(r);
+
+
+    //        }
+    //        //else
+    //        //{
+    //        //    _toastService.ShowInfo(r.Message.FirstOrDefault());
+    //        //}
+    //    }
+    //    //if (e.Code == "Back" || e.Code == "Delete" || e.Code == "Backspace")
+    //    //{
+    //    //    _Medicine.MName = "";
+    //    //    _Medicine.MId = "";
+
+    //    //}
+    //}
+    //private async Task LodefilterLists(ChangeEventArgs e)
+    //{
+    //    StateHasChanged();
+    //    if (e?.Value?.ToString().Length == 1)
+    //    {
+    //        _Medicine.MName = e?.Value?.ToString();
+    //        li = await _medicineService.ListMedicineName(_Medicine);
+    //        if (li.Status == true)
+    //        {
+    //            _Medicine.MedicineList = li.Data;
+
+    //        }
+
+    //    }
+
+    //}
+    //private Task<IEnumerable<string>> Search(string value)
+    //{
+
+
+    //    return Task.FromResult(states.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase)));
+    //}
+
+
+}

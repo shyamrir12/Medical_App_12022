@@ -1,0 +1,173 @@
+﻿@page "/Medicine"
+@page "/Medicine/{id}"
+@using Medical_App_1.Client.Services.MedicalService.Interfaces
+@using Medical_App_1.Shared.Models.Medical;
+@using Medical_App_1.Shared.Models;
+@using Medical_App_1.Client.Pages.UserControl;
+@inject NavigationManager _navigationManager
+@inject ILocalStorageService _localStorageService
+@inject IMedicineServiceClient _medicineService
+@inject IToastService _toastService
+
+
+<EditForm Model="@_Medicine" OnValidSubmit="SaveMedition">
+    <DataAnnotationsValidator />
+    @*<MudGrid>
+        <MudItem xs="12" sm="7">*@
+    <MudCard>
+
+        <MudCardContent  Class="pa-0">
+
+            <MudSimpleTable>
+                <tbody>
+                    <tr>
+                        <td> <h3>Medicine</h3></td>
+                        <td >
+                            @if (string.IsNullOrEmpty(Id))
+                            {
+                                <SelectMedition selectedItemParam="@_Medicine.SMedicine" Id=@_Medicine.MId.ToString() OnMedicineListSelection="SelectedMedetion"></SelectMedition>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <MudTextField Label="Name" @bind-Value="_Medicine.MName" For="@(() => _Medicine.MName)" />
+
+                        </td>
+                        <td> <MudTextField Label="Unit" @bind-Value="_Medicine.MUnit" For="@(() => _Medicine.MUnit)" /></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <MudTextField Label="Company" @bind-Value="_Medicine.MCN" For="@(() => _Medicine.MCN)" />
+
+                        </td>
+                        <td> <MudTextField Label="Rate" @bind-Value="_Medicine.MRate" For="@(() => _Medicine.MRate)" /></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <table>
+                                <tr>
+                                    <td><MudTextField Label="M.R.P." @bind-Value="_Medicine.MMRP" For="@(() => _Medicine.MMRP)" /> </td>
+                                    <td><MudTextField Label="GST %" @bind-Value="_Medicine.MVAT" For="@(() => _Medicine.MVAT)" /></td>
+                                    <td><MudTextField Label="Box Size" @bind-Value="_Medicine.MBox" For="@(() => _Medicine.MBox)" /></td>
+
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </tbody>
+            </MudSimpleTable>
+           
+        </MudCardContent>
+
+        <MudCardActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Submit</MudButton>
+        </MudCardActions>
+    </MudCard>
+    @*</MudItem>
+
+        </MudGrid>*@
+</EditForm>
+@*<EditForm Model="@_Medicine">
+        <h3>Medicine</h3>
+        <hr />
+        @if (string.IsNullOrEmpty(Id))
+        {
+            <div class="form-group row">
+                <label for="SearchMedicine" class="col-sm-2 col-form-label">Search Medicine</label>
+                <div class="col-sm-10">
+                    <SelectMedition selectedItemParam="@_Medicine.SMedicine" Id="1" OnMedicineSelection="SelectedMedetion"></SelectMedition>
+                </div>
+            </div>
+        }
+        <div class="form-group row">
+            <label for="MedicineName" class="col-sm-2 col-form-label">Medicine Name</label>
+            <div class="col-sm-10"><InputText id="MedicineName" class="form-control" placeholder="Medicine Name" @bind-Value="_Medicine.MName" /></div>
+        </div>
+        <div class="form-group row">
+            <label for="MedicineUnit" class="col-sm-2 col-form-label">Medicine Unit</label>
+            <div class="col-sm-10"><InputText id="MedicineUnit" class="form-control" placeholder="Medicine Unit" @bind-Value="_Medicine.MUnit" /></div>
+        </div>
+        <div class="form-group row">
+            <label for="CompanyName" class="col-sm-2 col-form-label">Company Name</label>
+            <div class="col-sm-10"><InputText id="CompanyName" class="form-control" placeholder="Company Name" @bind-Value="_Medicine.MCN" /></div>
+        </div>
+        <div class="form-group row">
+            <label for="MedicineRate" class="col-sm-2 col-form-label">Medicine Rate</label>
+            <div class="col-sm-10"><InputText id="MedicineRate" class="form-control" placeholder="Medicine Rate" @bind-Value="_Medicine.MRate" /></div>
+        </div>
+        <div class="form-group row">
+            <label for="MedicineMRP" class="col-sm-2 col-form-label">Medicine M.R.P.</label>
+            <div class="col-sm-10"><InputText id="MedicineMRP" class="form-control" placeholder="Medicine M.R.P." @bind-Value="_Medicine.MMRP" /></div>
+        </div>
+        <div class="form-group row">
+            <label for="MedicineGST" class="col-sm-2 col-form-label">Medicine GST %</label>
+            <div class="col-sm-10"><InputText id="MedicineGST" class="form-control" placeholder="Medicine GST %" @bind-Value="_Medicine.MVAT" /></div>
+        </div>
+        <div class="form-group row">
+            <label for="MedicineBoxSize" class="col-sm-2 col-form-label">Medicine Box Size</label>
+            <div class="col-sm-10"><InputText id="MedicineBoxSize" class="form-control" placeholder="Medicine Box Size" @bind-Value="_Medicine.MBox" /></div>
+        </div>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="SaveMedition">Save</MudButton>
+    </EditForm>*@
+@code {
+
+    public string ElementStyle { get; set; }
+    public Medicine _Medicine = new Medicine();
+
+    [CascadingParameter]
+    public Task<AuthenticationState> authenticationStateTask { get; set; }
+    //----param from pernt--
+    [Parameter]
+    public string Id { get; set; }
+    [Parameter]
+    public EventCallback<Medicine> OnMedicineSelection { get; set; }
+    //----param from pernt--
+
+    //---------------set param for pernt------------------
+    private async Task SaveMedition()
+    {
+
+        await OnMedicineSelection.InvokeAsync(_Medicine);
+    }
+    //---------------set param for pernt---------
+
+
+    void SelectedMedetion(Result<Medicine> r)
+    {
+
+        _Medicine = r.Data;
+    }
+
+
+
+    protected async override Task OnInitializedAsync()
+    {
+
+        var claimsPrincipal = (await authenticationStateTask).User;
+
+        if (!claimsPrincipal.Identity.IsAuthenticated)
+        {
+            _navigationManager.NavigateTo("/");
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(Id))
+            {
+                _Medicine.SMedicine = Id;
+
+                Result<Medicine> r = await _medicineService.ListMedicineSingle(_Medicine);
+                //_toastService.ShowInfo(r.Message.FirstOrDefault());
+                if (r.Status == true)
+                {
+
+                    _Medicine = r.Data;
+
+                }
+            }
+
+        }
+
+    }
+}

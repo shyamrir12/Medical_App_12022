@@ -1,0 +1,339 @@
+﻿@page "/PurchaseItem"
+@page "/PurchaseItem/{PurchaseId}"
+@page "/PurchaseItem/{PurchaseId}/{PurchaseItemId}"
+
+@using Medical_App_1.Client.Services.MedicalService.Interfaces
+@using Medical_App_1.Shared.Models.Medical;
+@using Medical_App_1.Shared.Models;
+@using Medical_App_1.Client.Pages.UserControl;
+@inject NavigationManager _navigationManager
+@inject ILocalStorageService _localStorageService
+@inject IMedicineServiceClient _medicineService
+@inject IToastService _toastService
+<EditForm Model="@_PurchseItem" OnValidSubmit="SavePurchseItem">
+    <MudCard>
+       
+        <MudCardContent Class="pa-0">
+            <MudSimpleTable>
+                <tbody>
+                    <tr>
+                        <td><h3>Item</h3></td>
+                        
+                        <td colspan="2"> <SelectMedition selectedItemParam="@_PurchseItem.MName" Id="@_PurchseItem.MId.ToString()" OnMedicineListSelection="@(e => SelectedMedetion(e))"></SelectMedition></td>
+                    </tr>
+                    <tr>
+                         <td>
+
+                            <MudTextField Label="Strip" @bind-Value="@Stri" For="@(() => _PurchseItem.Stri)" Immediate="true" />
+
+                        </td>
+                        <td>
+                            <MudTextField Label="Tab" @bind-Value="@Tab" For="@(() => _PurchseItem.Tab)" Immediate="true" />
+
+                        </td>
+
+                        <td>
+                            <MudTextField Label="Free" @bind-Value="@Free" For="@(() => _PurchseItem.Free)" Immediate="true" />
+
+                        </td>
+                    </tr>
+                    <tr>
+
+                        <td>
+                            <MudTextField Label="Disc" @bind-Value="@Disc" For="@(() => _PurchseItem.Disc)" Immediate="true" />
+
+                        </td>
+
+
+                        <td>
+                            <MudDatePicker Label="ExpDate" @bind-Date="@_PurchseItem.ExpDate" DateFormat="dd.MM.yyyy" />
+
+                        </td>
+                        <td>
+                            <MudTextField Label="BatchNo" @bind-Value="@_PurchseItem.BatchNo" For="@(() => _PurchseItem.BatchNo)" />
+
+                        </td>
+
+
+                    </tr>
+                    <tr>
+                        <td>
+                            <MudTextField Label="Rate" @bind-Value="@Rate" For="@(() => _PurchseItem.Rate)" />
+
+                        </td>
+                        <td>
+                            <MudTextField Label="MRP" @bind-Value="@_PurchseItem.MRP" For="@(() => _PurchseItem.MRP)" />
+
+
+                        </td>
+                        <td>
+                            <MudTextField Label="Gst%" @bind-Value="@Vat" For="@(() => _PurchseItem.Vat)" />
+
+                        </td>
+
+
+
+                    </tr>
+                    <tr>
+
+
+                        <td>
+
+                            <MudTextField Label="Dis Amount" @bind-Value="@_PurchseItem.DescA" For="@(() => _PurchseItem.DescA)" ReadOnly="true" Variant="Variant.Filled" />
+
+                        </td>
+                        <td>
+
+                            <MudTextField Label="Gst Amount" @bind-Value="@_PurchseItem.VatA" For="@(() => _PurchseItem.VatA)" ReadOnly="true" Variant="Variant.Filled" />
+
+                        </td>
+
+                        <td>
+
+                            <MudTextField Label="Amount" @bind-Value="@_PurchseItem.Amount" For="@(() => _PurchseItem.Amount)" ReadOnly="true" Variant="Variant.Filled" />
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+            </MudSimpleTable>
+
+        </MudCardContent>
+
+        <MudCardActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Submit</MudButton>
+        </MudCardActions>
+    </MudCard>
+    @*<MudDialog @bind-IsVisible="medicinevisible">
+        <DialogContent>
+            <MudContainer Style="max-height: 400px; width:500px; overflow-y: scroll">
+                <MedicinePage Id="@_Medicine.SMedicine" OnMedicineSelection="MedicineRate"></MedicinePage>
+            </MudContainer>
+
+        </DialogContent>
+    </MudDialog>*@
+</EditForm>
+@code {
+
+
+    private bool medicinevisible=false;
+    public PurchaseItem _PurchseItem = new PurchaseItem();
+    public Medicine _Medicine = new Medicine();
+    [CascadingParameter]
+    public Task<AuthenticationState> authenticationStateTask { get; set; }
+    //----param from pernt--
+    [Parameter]
+    public string PurchaseItemId { get; set; }
+    [Parameter]
+    public string PurchaseId { get; set; }
+    [Parameter]
+    public EventCallback<PurchaseItem> OnPurchseItemSelection { get; set; }
+    //----param from pernt--
+
+    //---------------set param for pernt------------------
+    private async Task SavePurchseItem()
+    {
+        //if (_PurchseItem.Rate == "0" || _PurchseItem.MRP == "0")
+        //{
+        //    _Medicine.SMedicine = _PurchseItem.MName;
+        //    medicinevisible = true;
+        //}
+        //else
+        //{
+        if(!string.IsNullOrEmpty(_PurchseItem.MName))
+        {
+            await OnPurchseItemSelection.InvokeAsync(_PurchseItem);
+        }
+
+        //}
+
+    }
+    //---------------set param for pernt---------
+    void SelectedMedetion(Result<Medicine> r)
+    {
+
+        _PurchseItem.MName = r.Data.SMedicine;
+        _PurchseItem.Rate = r.Data.MRate;
+        _PurchseItem.MRP = r.Data.MMRP;
+        _PurchseItem.MId = r.Data.MId;
+        _PurchseItem.Vat = r.Data.MVAT;
+        _PurchseItem.Box = r.Data.MBox;
+
+
+    }
+    //public void MedicineRate(Medicine value)
+    //{
+    //    _PurchseItem.Rate = value.MRate;
+    //    _PurchseItem.MRP = value.MMRP;
+    //    medicinevisible = false;
+    //}
+    public int Stri
+    {
+        get
+        {
+            return _PurchseItem.Stri;
+        }
+        set
+        {
+            _PurchseItem.Stri = value;
+            Calculate();
+        }
+    }
+    public int Tab
+    {
+        get
+        {
+            return _PurchseItem.Tab;
+        }
+        set
+        {
+            _PurchseItem.Tab = value;
+            Calculate();
+        }
+    }
+    public decimal Disc
+    {
+        get
+        {
+            return _PurchseItem.Disc;
+        }
+        set
+        {
+            _PurchseItem.Disc = value;
+            Calculate();
+        }
+    }
+    public int Free
+    {
+        get
+        {
+            return _PurchseItem.Free;
+        }
+        set
+        {
+            _PurchseItem.Free = value;
+            Calculate();
+        }
+    }
+    public decimal Rate
+    {
+        get
+        {
+            return _PurchseItem.Rate;
+        }
+        set
+        {
+            _PurchseItem.Rate = value;
+            Calculate();
+        }
+    }
+    public int Vat
+    {
+        get
+        {
+            return _PurchseItem.Vat;
+        }
+        set
+        {
+            _PurchseItem.Vat = value;
+            Calculate();
+        }
+    }
+    private void Calculate()
+    {
+        //decimal fvom = 0, fdesc = 0, fvat = 0, fnamtAmount = 0;
+
+        //foreach (var item in _Purchse.PurchaseItemList)
+        //{
+
+
+        decimal box = 0, mrate = 0, mratetab = 0, mvattab = 0, amount = 0, amounttab = 0, mvat = 0, netamount = 0, vom = 0, vov = 0, desc = 0, vomod = 0, vovod = 0, netamountod = 0, BoxSize = 0, tvomdesc = 0;
+
+        if (_PurchseItem.Box!=0)
+        {
+
+            //if (string.IsNullOrEmpty(_PurchseItem.Rate))
+            //    _PurchseItem.Rate = "0";
+            //if (string.IsNullOrEmpty(_PurchseItem.Stri))
+            //    _PurchseItem.Stri = "0";
+            //if (string.IsNullOrEmpty(_PurchseItem.Vat))
+            //    _PurchseItem.Vat = "0";
+            //if (string.IsNullOrEmpty(_PurchseItem.Disc))
+            //    _PurchseItem.Disc = "0";
+            //if (string.IsNullOrEmpty(_PurchseItem.Free))
+            //    _PurchseItem.Free = "0";
+            //if (string.IsNullOrEmpty(_PurchseItem.VOM))
+            //    _PurchseItem.VOM = "0";
+
+            box = Convert.ToDecimal(_PurchseItem.Box);
+            if (BoxSize == 1)
+            {
+                _PurchseItem.Tab = 0;
+            }
+
+            mrate = _PurchseItem.Rate *_PurchseItem.Stri;
+            mvat = (mrate * _PurchseItem.Vat) / 100;
+            amount = mrate + mvat;
+
+
+            mratetab = _PurchseItem.Rate / box;
+            mratetab = mratetab * _PurchseItem.Tab;
+            mvattab = (mratetab * _PurchseItem.Vat) / 100;
+            amounttab = mratetab + mvattab;
+
+
+            netamount = amount + amounttab;
+            //MAmount.Text = netamount.ToString();
+            vom = mrate + mratetab;//value of goog without vate
+            vov = mvat + mvattab;// only vat
+
+            if (Convert.ToDecimal(_PurchseItem.Disc) > 0)
+            {
+                desc = (vom * Convert.ToDecimal(_PurchseItem.Disc)) / 100;
+                vomod = vom - desc;
+                vovod = (vomod * Convert.ToDecimal(_PurchseItem.Vat)) / 100;
+                netamountod = vomod + vovod;
+                _PurchseItem.DescA = desc;
+                _PurchseItem.Amount = netamountod;
+                _PurchseItem.VatA = vovod;
+
+
+            }
+            else
+            {
+                _PurchseItem.DescA = 0;
+                _PurchseItem.Amount = netamount;
+                _PurchseItem.VatA = vov;
+            }
+            tvomdesc = vom - desc;
+            _PurchseItem.VOM = vom;
+            _PurchseItem.TVOMDESC = tvomdesc;
+
+        }
+
+
+
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+
+        var claimsPrincipal = (await authenticationStateTask).User;
+
+        if (!claimsPrincipal.Identity.IsAuthenticated)
+        {
+            _navigationManager.NavigateTo("/");
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(PurchaseItemId))
+            {
+                // _PurchseItem = new PurchaseItem();
+            }
+
+        }
+
+    }
+}
+

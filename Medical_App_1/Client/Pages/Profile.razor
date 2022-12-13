@@ -1,0 +1,44 @@
+﻿@page "/profile"
+@using Medical_App_1.Client.Pages.UserControl;
+@using Medical_App_1.Shared.Models.Medical;
+@using Medical_App_1.Shared.Models;
+@using Medical_App_1.Client.Services.MedicalService.Interfaces
+@inject IJSRuntime _jsRuntime
+@inject IReportServiceClient _reportService
+<h3>Profile</h3>
+<SelectMedition selectedItemParam="@_Medicine.SMedicine" Id="@_Medicine.MId.ToString()" OnMedicineListSelection="SelectedMedetion"></SelectMedition>
+<MudCardActions>
+    <MudButton OnClick="@download" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Downoad</MudButton>
+    @*<a href="http://localhost:63281/api/Report/PurchaseSingleReport?BillNo=A001" target="_blank">test</a>*@
+
+</MudCardActions>
+
+
+@code {
+    public Medicine _Medicine = new Medicine();
+    Result<string> _result = new Result<string>();
+    string fpa = "";
+    void SelectedMedetion(Result<Medicine> r)
+    {
+
+        _Medicine = r.Data;
+    }
+    private async void download()
+    {
+        _result = await _reportService.GetPurchaseSingleReport("A001");
+        // byte[] bytes = Convert.FromBase64String(report);
+
+        //return "data:application/pdf;base64," + _result.Data;
+        //   byte[] bytes = Convert.FromBase64String(_result.Data);
+     
+
+        if (_result.Status==true)
+        {
+
+            var module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import","./js/site.js");
+            await module.InvokeVoidAsync("FileOpenNewTab", "application/pdf",_result.Data,"bill.pdf");
+        }
+    }
+
+
+}
